@@ -1,0 +1,1388 @@
+<title>Nodo — Rete Viva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-950:#12141f;
+    --ink-900:#191c2c;
+    --ink-850:#1f2338;
+    --ink-800:#262b46;
+    --ink-750:#2c3252;
+    --line:#3d4470;
+    --line-soft:#2a2f4d;
+    --parchment:#f1e9d8;
+    --text:#efe9da;
+    --text-muted:#9aa0c4;
+    --text-dim:#6d7399;
+    --accent:#c9789c;
+    --accent-soft:#4a3244;
+    --good:#7fae5f;
+    --bad:#d9694a;
+    --p1:#d9694a;
+    --p2:#4f97c9;
+    --p3:#7fae5f;
+    --p4:#d1a83a;
+    --radius:14px;
+    --font-display:'Fraunces',Georgia,serif;
+    --font-body:'IBM Plex Sans',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--ink-950);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    padding-inline:14px;
+    padding-block:10px;
+  }
+  h1,h2,h3{font-family:var(--font-display);font-weight:600;margin:0;text-wrap:balance;}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input[type=text],input[type=number]{font-family:var(--font-body);}
+  .hidden{display:none!important;}
+  .screen{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;}
+  /* ---------- Setup ---------- */
+  #setup{max-width:640px;margin:0 auto;width:100%;padding-block:18px;gap:22px;}
+  .brand{text-align:center;}
+  .brand .word{font-size:2.1rem;letter-spacing:.02em;color:var(--parchment);}
+  .brand .sub{color:var(--text-muted);font-size:.85rem;margin-top:4px;}
+  .card{background:var(--ink-900);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;}
+  .card h3{font-size:1rem;color:var(--parchment);margin-bottom:10px;}
+  .field-label{font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip-btn{
+    border:1px solid var(--line);background:var(--ink-850);color:var(--text);
+    border-radius:999px;padding:8px 16px;font-size:.9rem;transition:background .15s,border-color .15s;
+  }
+  .chip-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--parchment);}
+  .player-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .dot{width:14px;height:14px;border-radius:50%;flex:none;}
+  .player-row input{flex:1;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font-size:.92rem;}
+  .word-row{display:flex;gap:8px;}
+  .word-row input{flex:1;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font-size:.95rem;}
+  .ghost-btn{background:transparent;border:1px solid var(--line);color:var(--text-muted);border-radius:8px;padding:8px 12px;font-size:.85rem;}
+  .ghost-btn:hover{color:var(--text);border-color:var(--accent);}
+  .radio-line{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.92rem;}
+  .radio-line input[type=number]{width:64px;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 8px;font-family:var(--font-mono);}
+  .toggle-line{display:flex;align-items:center;gap:8px;font-size:.92rem;color:var(--text-muted);}
+  .primary-btn{
+    background:var(--accent);color:var(--ink-950);border:none;border-radius:10px;
+    padding:14px 20px;font-size:1rem;font-weight:600;width:100%;letter-spacing:.01em;
+  }
+  .primary-btn:active{transform:translateY(1px);}
+  .primary-btn:disabled{opacity:.5;cursor:default;}
+  /* ---------- Game screen ---------- */
+  #game{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;}
+  .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .wordmark{font-family:var(--font-display);color:var(--parchment);font-size:1rem;opacity:.8;flex:none;}
+  .turn-chip{display:flex;align-items:center;gap:7px;background:var(--ink-900);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;font-size:.85rem;}
+  .turn-chip .dot{width:10px;height:10px;}
+  .turn-count{color:var(--text-dim);font-size:.78rem;font-family:var(--font-mono);}
+  .action-row{display:flex;gap:8px;margin-left:auto;}
+  .action-btn{
+    border-radius:10px;padding:9px 14px;font-size:.86rem;font-weight:600;border:1px solid var(--line);
+    background:var(--ink-850);color:var(--text);
+  }
+  .action-btn.expand{border-color:var(--good);color:var(--good);}
+  .action-btn.reinforce{border-color:var(--accent);color:var(--accent);}
+  .action-btn:disabled{opacity:.35;}
+  .stage-wrap{background:var(--ink-900);border:1px solid var(--line-soft);border-radius:var(--radius);flex:1;min-height:42vh;position:relative;overflow:hidden;}
+  svg#net{width:100%;height:100%;display:block;}
+  .node-circle{cursor:pointer;transition:filter .1s;}
+  .node-circle:hover{filter:brightness(1.15);}
+  .node-label{font-family:var(--font-body);font-size:10.5px;fill:var(--text);pointer-events:none;}
+  .edge-line{stroke:var(--line);stroke-width:1.6;}
+  .grid-dot{fill:var(--line-soft);pointer-events:none;}
+  .grid-dot.candidate{fill:var(--accent);cursor:pointer;pointer-events:auto;}
+  .grid-dot.candidate:hover{filter:brightness(1.3);}
+  .trap-ring{stroke:#e0563f;stroke-width:1.6;stroke-dasharray:3,3;pointer-events:none;}
+  .stage-hint{position:absolute;top:8px;left:10px;right:10px;font-size:.75rem;color:var(--text-muted);background:rgba(18,20,31,.7);padding:4px 8px;border-radius:6px;pointer-events:none;}
+  .panel{background:var(--ink-900);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 14px;font-size:.9rem;}
+  .panel p{margin:0 0 8px 0;color:var(--text-muted);}
+  .panel .word-highlight{color:var(--parchment);font-weight:600;}
+  .panel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .step-btn{border-radius:9px;padding:9px 14px;font-size:.85rem;border:1px solid var(--line);background:var(--ink-850);color:var(--text);}
+  .step-btn.primary{background:var(--accent);color:var(--ink-950);border-color:var(--accent);font-weight:600;}
+  .step-btn.good{background:transparent;border-color:var(--good);color:var(--good);}
+  .step-btn.bad{background:transparent;border-color:var(--bad);color:var(--bad);}
+  .panel input[type=text]{width:100%;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 11px;font-size:.94rem;margin-bottom:6px;}
+  .vote-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+  .vote-row:last-child{border-bottom:none;}
+  .score-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
+  .player-chip{
+    flex:none;background:var(--ink-900);border:1px solid var(--line-soft);border-radius:11px;
+    padding:8px 12px;min-width:108px;display:flex;flex-direction:column;gap:3px;
+  }
+  .player-chip.current{border-color:var(--accent);}
+  .player-chip .pname{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;}
+  .player-chip .pscore{font-family:var(--font-mono);font-size:1.15rem;color:var(--parchment);}
+  .player-chip .phand{font-size:.72rem;color:var(--text-dim);background:transparent;border:none;text-align:left;padding:0;}
+  .player-chip .phand:hover{color:var(--accent);}
+  details.drawer{background:var(--ink-900);border:1px solid var(--line-soft);border-radius:var(--radius);}
+  details.drawer summary{padding:10px 14px;font-size:.86rem;color:var(--text-muted);cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+  details.drawer summary::-webkit-details-marker{display:none;}
+  details.drawer summary:after{content:'+';font-size:1.1rem;color:var(--text-dim);}
+  details.drawer[open] summary:after{content:'–';}
+  .drawer-body{padding:0 14px 14px;font-size:.85rem;color:var(--text-muted);}
+  .log-entry{padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:.82rem;}
+  .log-entry:last-child{border-bottom:none;}
+  .log-entry .lt{color:var(--text-dim);font-family:var(--font-mono);font-size:.72rem;margin-right:6px;}
+  .config-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+  .config-table td{padding:4px 4px;border-bottom:1px solid var(--line-soft);}
+  .config-table td:last-child{text-align:right;font-family:var(--font-mono);color:var(--accent);}
+  .end-btn-wrap{padding:0 14px 14px;}
+  .end-confirm-btn{background:transparent;border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:9px 14px;font-size:.85rem;}
+  /* overlays */
+  .overlay{position:fixed;inset:0;background:rgba(10,11,20,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .overlay-card{background:var(--ink-900);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:420px;width:100%;text-align:center;}
+  .overlay-card h3{color:var(--parchment);font-size:1.3rem;margin-bottom:6px;}
+  .overlay-card .pts{color:var(--accent);font-family:var(--font-mono);font-size:1.6rem;margin:10px 0;}
+  .hand-card{background:var(--ink-850);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;text-align:left;}
+  .hand-card .hn{color:var(--parchment);font-weight:600;font-size:.95rem;}
+  .hand-card .hd{color:var(--text-muted);font-size:.78rem;margin-top:3px;}
+  .hand-card .hp{color:var(--accent);font-family:var(--font-mono);font-size:.85rem;margin-top:3px;}
+  /* end screen */
+  #end{max-width:520px;margin:0 auto;width:100%;padding-block:24px;gap:16px;}
+  .rank-row{display:flex;align-items:center;gap:10px;background:var(--ink-900);border:1px solid var(--line-soft);border-radius:11px;padding:12px 14px;}
+  .rank-row .rk{font-family:var(--font-mono);color:var(--text-dim);width:20px;}
+  .rank-row .rn{flex:1;font-weight:600;}
+  .rank-row .rs{font-family:var(--font-mono);color:var(--parchment);font-size:1.2rem;}
+  @media (max-width:480px){
+    .brand .word{font-size:1.7rem;}
+    .stage-wrap{min-height:38vh;}
+  }
+</style>
+
+<div id="setup" class="screen">
+  <div class="brand">
+    <div class="word">NODO</div>
+    <div class="sub">rete guida triangolare — prototipo v2</div>
+  </div>
+
+  <div class="card">
+    <h3>Giocatori</h3>
+    <span class="field-label">Quanti siete</span>
+    <div class="chip-row" id="playerCountRow"></div>
+    <div id="playerNames" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Parola iniziale</h3>
+    <div class="word-row">
+      <input type="text" id="startWord" maxlength="24" placeholder="es. TEMPO">
+      <button class="ghost-btn" id="randomWordBtn" type="button">a caso</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tabellone</h3>
+    <span class="field-label">Dimensione della rete guida</span>
+    <div class="chip-row" id="boardSizeRow"></div>
+    <div style="margin-top:14px;">
+      <span class="field-label">Nodi Trappola nascosti</span>
+      <input type="number" id="trapCount" value="2" min="0" max="6" style="max-width:90px;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font-family:var(--font-mono);">
+      <p style="color:var(--text-muted);font-size:.8rem;margin-top:8px;">Caselle scelte a caso e nascoste: chi vi espande per primo le rivela — quel Nodo non conterà mai per una Configurazione, e si scarta subito una carta a caso dalla propria mano.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Fine partita</h3>
+    <div class="radio-line"><label><input type="radio" name="endMode" value="configs" checked> Configurazioni completate in totale:</label> <input type="number" id="endConfigsVal" value="8" min="2" max="40"></div>
+    <div class="radio-line"><label><input type="radio" name="endMode" value="network"> La rete raggiunge questa dimensione:</label> <input type="number" id="endNetworkVal" value="40" min="10" max="200"></div>
+    <div class="radio-line"><label><input type="radio" name="endMode" value="deckEmpty"> Il mazzo Configurazioni si esaurisce</label></div>
+    <div class="radio-line"><label><input type="radio" name="endMode" value="boardFull"> Il tabellone si riempie completamente</label></div>
+    <div class="radio-line"><label><input type="radio" name="endMode" value="manual"> Solo a fine manuale</label></div>
+  </div>
+
+  <div class="card">
+    <h3>Regole</h3>
+    <label class="toggle-line"><input type="checkbox" id="contestToggle" checked> Abilita la contestazione delle associazioni</label>
+    <div style="margin-top:14px;">
+      <span class="field-label">Segnalini di Rinforzo (per giocatore)</span>
+      <input type="number" id="reinforceCount" value="5" min="0" max="12" style="max-width:90px;background:var(--ink-850);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font-family:var(--font-mono);">
+      <p style="color:var(--text-muted);font-size:.8rem;margin-top:8px;">Ogni giocatore ha solo questa riserva per tutta la partita: non si ricarica. Esaurita, potrà ancora Espandere ma non Rinforzare.</p>
+    </div>
+  </div>
+
+  <button class="primary-btn" id="startGameBtn" type="button">Inizia la partita</button>
+</div>
+
+<div id="game" class="screen hidden">
+  <div class="topbar">
+    <div class="wordmark" id="gameWordmark">NODO</div>
+    <div class="turn-chip"><span class="dot" id="turnDot"></span><span id="turnName"></span></div>
+    <span class="turn-count" id="turnCount"></span>
+    <div class="action-row">
+      <button class="action-btn expand" id="btnExpand" type="button">Espandi</button>
+      <button class="action-btn reinforce" id="btnReinforce" type="button">Rinforza</button>
+    </div>
+  </div>
+
+  <div class="stage-wrap">
+    <svg id="net" viewBox="0 0 100 100">
+      <defs>
+        <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <rect width="6" height="6" fill="#262b46"></rect>
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#c9789c" stroke-width="2"></line>
+        </pattern>
+      </defs>
+      <g id="gridLayer"></g>
+      <g id="edgeLayer"></g>
+      <g id="nodeLayer"></g>
+    </svg>
+    <div class="stage-hint hidden" id="stageHint"></div>
+  </div>
+
+  <div class="panel" id="actionPanel"></div>
+
+  <div class="score-strip" id="scoreStrip"></div>
+
+  <details class="drawer">
+    <summary>Cronaca</summary>
+    <div class="drawer-body" id="logBody" style="max-height:200px;overflow:auto;"></div>
+  </details>
+
+  <details class="drawer">
+    <summary>Regole rapide</summary>
+    <div class="drawer-body">
+      <p><strong style="color:var(--parchment)">La rete guida</strong> — i puntini sono le caselle del tabellone: un reticolo triangolare in cui ogni casella ha fino a 6 caselle adiacenti, per rendere leggibili a colpo d'occhio anche le forme più complesse.</p>
+      <p><strong style="color:var(--parchment)">Espandi</strong> — scegli un Nodo di partenza non saturo, poi una casella libera adiacente, poi proponi una parola collegata. Se nessuno contesta (o vince il voto), il nuovo Nodo nasce lì e ricevi subito un tuo segnalino.</p>
+      <p><strong style="color:var(--parchment)">Rinforza</strong> — scegli un Nodo qualsiasi già esistente e aggiungi un tuo segnalino, senza crearne uno nuovo. È l'unico modo per contendere o ribaltare un Nodo che non hai creato tu. Ogni giocatore ha però solo una riserva limitata di segnalini di Rinforzo per tutta la partita (decisa in setup, non si ricarica): quando finiscono, quel giocatore può ancora Espandere ma non Rinforzare più.</p>
+      <p><strong style="color:var(--parchment)">Saturazione</strong> — un Nodo con tutte le caselle intorno occupate (o fuori dal tabellone) è saturo: non puoi più espandere da lì, ma resta rinforzabile.</p>
+      <p><strong style="color:var(--parchment)">Stati del Nodo</strong> — Libero: nessun segnalino. Controllato: un giocatore ha più segnalini di chiunque altro. Conteso: due o più giocatori sono a pari segnalini — il Nodo resta in gioco ma non conta per nessuna Configurazione.</p>
+      <p><strong style="color:var(--parchment)">Nodi Trappola</strong> — alcune caselle nascondono una trappola: chi vi espande per primo la rivela (anello tratteggiato rosso). Quel Nodo non conterà mai per nessuna Configurazione e si scarta subito una carta a caso.</p>
+      <p><strong style="color:var(--parchment)">Configurazioni</strong> — ogni giocatore ha 3 carte segrete. Ogni volta che i tuoi Nodi controllati formano la struttura richiesta da una carta, la completi automaticamente: punti, scarto, nuova pesca.</p>
+    </div>
+  </details>
+
+  <details class="drawer">
+    <summary>Le Configurazioni</summary>
+    <div class="drawer-body">
+      <table class="config-table" id="configRefTable"></table>
+    </div>
+  </details>
+
+  <details class="drawer">
+    <summary>Fine partita</summary>
+    <div class="end-btn-wrap">
+      <button class="end-confirm-btn" id="endGameBtn" type="button">Termina partita ora</button>
+    </div>
+  </details>
+</div>
+
+<div id="end" class="screen hidden">
+  <div class="brand"><div class="word">Fine partita</div></div>
+  <div id="rankList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  <button class="primary-btn" id="newGameBtn" type="button">Nuova partita</button>
+</div>
+
+<div id="overlayRoot"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ CONFIGURATION TYPES ============ */
+var CONFIG_TYPES = {
+  coppia:        {label:"Stella Doppia",        desc:"2 Nodi controllati collegati tra loro — come due stelle di un sistema binario.",                          points:1,  tier:'A'},
+  catena3:       {label:"Cintura di Orione",    desc:"Un percorso di 3 Nodi controllati consecutivi — le tre stelle allineate più famose del cielo.",           points:2,  tier:'A'},
+  angolo:        {label:"Falce del Leone",      desc:"Un Nodo controllato con esattamente 2 collegamenti controllati — il tratto ricurvo di una costellazione.", points:2,  tier:'A'},
+  catena4:       {label:"Croce del Cigno",      desc:"Un percorso di 4 Nodi controllati consecutivi — l'asse della Croce del Nord.",                             points:3,  tier:'B'},
+  biforcazione:  {label:"Tridente",             desc:"Un Nodo controllato con esattamente 3 collegamenti controllati — tre bracci da un unico punto.",          points:4,  tier:'B'},
+  catena5:       {label:"Cassiopea",            desc:"Un percorso di 5 Nodi controllati consecutivi — la celebre \"W\" del cielo boreale.",                      points:5,  tier:'B'},
+  t:             {label:"Scorpione",            desc:"Un Nodo con 3+ collegamenti controllati, un ramo lungo 2+ Nodi — un corpo dritto con una coda ripiegata.",points:5,  tier:'B'},
+  costellazione5:{label:"Piccolo Ammasso",      desc:"Un gruppo connesso di almeno 5 Nodi controllati.",                                                        points:5,  tier:'B'},
+  stella4:       {label:"Croce del Sud",        desc:"Un Nodo con esattamente 4 collegamenti controllati — come le stelle principali della Crux.",              points:6,  tier:'C'},
+  ponte:         {label:"Ponte Celeste",        desc:"Un Nodo che, rimosso, lascia 2 rami controllati da 2+ Nodi — il punto che unisce due bracci distinti.",   points:6,  tier:'C'},
+  doppiaY:       {label:"Gemelli",              desc:"2 Nodi controllati di grado 3+ collegati direttamente — due snodi vicini, come le stelle dei Gemelli.",   points:7,  tier:'C'},
+  catena6:       {label:"Sestetto Stellare",    desc:"Un percorso di 6 Nodi controllati consecutivi.",                                                          points:7,  tier:'C'},
+  croce5:        {label:"Pentagono di Auriga",  desc:"Un Nodo con esattamente 5 collegamenti controllati — come l'asterismo a 5 lati del Cocchiere.",           points:8,  tier:'C'},
+  costellazione8:{label:"Grande Ammasso",       desc:"Un gruppo connesso di almeno 8 Nodi controllati.",                                                        points:8,  tier:'C'},
+  catena8:       {label:"Serpente",             desc:"Un percorso di 8 Nodi controllati consecutivi — una lunga catena sinuosa.",                               points:10, tier:'C'},
+  stella6:       {label:"Corona Boreale",       desc:"Un Nodo con esattamente 6 collegamenti controllati — sei raggi disposti a corona.",                       points:10, tier:'C'}
+};
+var TIER_COPIES = {A:3,B:2,C:1};
+
+function buildDeck(){
+  var deck=[];
+  Object.keys(CONFIG_TYPES).forEach(function(key){
+    var n=TIER_COPIES[CONFIG_TYPES[key].tier];
+    for(var i=0;i<n;i++) deck.push(key);
+  });
+  return shuffle(deck);
+}
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+/* ============ GRAPH HELPERS ============ */
+function nodeStatus(node){
+  var counts=node.tokens||{};
+  var max=0, tops=[];
+  Object.keys(counts).forEach(function(pid){
+    var c=counts[pid]||0;
+    if(c>max){max=c;tops=[pid];}
+    else if(c===max && c>0){tops.push(pid);}
+  });
+  if(max===0) return {status:'libero', owner:null, top:tops};
+  if(tops.length>1) return {status:'conteso', owner:null, top:tops};
+  return {status:'controllato', owner:tops[0], top:tops};
+}
+
+function buildSubgraph(playerId, state){
+  var owned=new Set();
+  state.nodes.forEach(function(n){
+    if(n.trap) return; /* Nodo Trappola: non conta mai per nessuna Configurazione */
+    var st=nodeStatus(n);
+    if(st.status==='controllato' && st.owner===playerId) owned.add(n.id);
+  });
+  var adj=new Map();
+  owned.forEach(function(id){adj.set(id,[]);});
+  state.edges.forEach(function(e){
+    if(owned.has(e.a) && owned.has(e.b)){
+      adj.get(e.a).push(e.b);
+      adj.get(e.b).push(e.a);
+    }
+  });
+  return {owned:owned, adj:adj};
+}
+
+function components(sub){
+  var seen=new Set(), comps=[];
+  sub.owned.forEach(function(start){
+    if(seen.has(start)) return;
+    var comp=[], stack=[start]; seen.add(start);
+    while(stack.length){
+      var u=stack.pop(); comp.push(u);
+      sub.adj.get(u).forEach(function(v){
+        if(!seen.has(v)){seen.add(v); stack.push(v);}
+      });
+    }
+    comps.push(comp);
+  });
+  return comps;
+}
+
+function bfsFarthest(startId, adj){
+  var dist=new Map([[startId,0]]);
+  var q=[startId], far=startId;
+  while(q.length){
+    var u=q.shift();
+    adj.get(u).forEach(function(v){
+      if(!dist.has(v)){
+        dist.set(v, dist.get(u)+1);
+        if(dist.get(v)>dist.get(far)) far=v;
+        q.push(v);
+      }
+    });
+  }
+  return {far:far, dist:dist};
+}
+function diameterNodes(comp, adj){
+  if(comp.length<=1) return comp.length;
+  var r1=bfsFarthest(comp[0], adj);
+  var r2=bfsFarthest(r1.far, adj);
+  return r2.dist.get(r2.far)+1;
+}
+function branchSizes(nodeId, adj){
+  var neighbors=adj.get(nodeId);
+  var sizes=[];
+  neighbors.forEach(function(nb){
+    var seen=new Set([nodeId, nb]);
+    var stack=[nb], count=0;
+    while(stack.length){
+      var u=stack.pop(); count++;
+      adj.get(u).forEach(function(w){
+        if(!seen.has(w)){seen.add(w); stack.push(w);}
+      });
+    }
+    sizes.push(count);
+  });
+  return sizes;
+}
+
+function evaluateHand(playerId, state){
+  var sub=buildSubgraph(playerId, state);
+  if(sub.owned.size===0) return {};
+  var comps=components(sub);
+  var degOf=function(id){return sub.adj.get(id).length;};
+  var maxDiameter=0, maxComp=0;
+  comps.forEach(function(c){
+    maxComp=Math.max(maxComp,c.length);
+    maxDiameter=Math.max(maxDiameter, diameterNodes(c, sub.adj));
+  });
+  var hasDegree=function(d){
+    var found=false;
+    sub.owned.forEach(function(id){ if(degOf(id)===d) found=true; });
+    return found;
+  };
+  var hasT=function(){
+    var found=false;
+    sub.owned.forEach(function(id){
+      if(found) return;
+      if(degOf(id)>=3){
+        var sizes=branchSizes(id, sub.adj);
+        if(sizes.filter(function(s){return s>=2;}).length>=1) found=true;
+      }
+    });
+    return found;
+  };
+  var hasPonte=function(){
+    var found=false;
+    sub.owned.forEach(function(id){
+      if(found) return;
+      if(degOf(id)>=2){
+        var sizes=branchSizes(id, sub.adj);
+        if(sizes.filter(function(s){return s>=2;}).length>=2) found=true;
+      }
+    });
+    return found;
+  };
+  var hasDoppiaY=function(){
+    var found=false;
+    state.edges.forEach(function(e){
+      if(found) return;
+      if(sub.owned.has(e.a) && sub.owned.has(e.b) && degOf(e.a)>=3 && degOf(e.b)>=3) found=true;
+    });
+    return found;
+  };
+  var results={};
+  results.coppia = maxDiameter>=2;
+  results.catena3 = maxDiameter>=3;
+  results.angolo = hasDegree(2);
+  results.catena4 = maxDiameter>=4;
+  results.biforcazione = hasDegree(3);
+  results.catena5 = maxDiameter>=5;
+  results.t = hasT();
+  results.costellazione5 = maxComp>=5;
+  results.stella4 = hasDegree(4);
+  results.ponte = hasPonte();
+  results.doppiaY = hasDoppiaY();
+  results.catena6 = maxDiameter>=6;
+  results.croce5 = hasDegree(5);
+  results.costellazione8 = maxComp>=8;
+  results.catena8 = maxDiameter>=8;
+  results.stella6 = hasDegree(6);
+  return results;
+}
+
+/* ============ PALETTE / WORD LIST ============ */
+var PLAYER_COLORS = ['#d9694a','#4f97c9','#7fae5f','#d1a83a'];
+var PLAYER_NAMES_DEFAULT = ['Rosso','Blu','Verde','Giallo'];
+var SEED_WORDS = ['TEMPO','CITTÀ','MARE','MEMORIA','VIAGGIO','FUOCO','NOTTE','MUSICA','CONFINE','RADICE','SOGNO','ORIZZONTE'];
+
+/* ============ RETE GUIDA: reticolo triangolare a 6 direzioni ============
+   Stessa connettività di una griglia esagonale (ogni casella ha fino a 6
+   vicine), ma disegnata come punti e linee — una "rete di parole" invece
+   di tessere esagonali, per non ricalcare Landmark e affini. Coordinate
+   assiali standard: riuso identico per calcolare vicini, distanza dal
+   centro e l'intero tabellone. */
+var HEX_DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+var HEX_SIZE = 34;
+var BOARD_SIZES = [
+  {key:'small',  label:'Piccola', R:4},
+  {key:'medium', label:'Media',   R:6},
+  {key:'large',  label:'Grande',  R:8}
+];
+function hexKey(q,r){ return q+','+r; }
+function hexDistance(q,r){ return (Math.abs(q)+Math.abs(q+r)+Math.abs(r))/2; }
+function hexesInRadius(R){
+  var cells=[];
+  for(var q=-R;q<=R;q++){
+    var r1=Math.max(-R,-q-R), r2=Math.min(R,-q+R);
+    for(var r=r1;r<=r2;r++) cells.push({q:q,r:r});
+  }
+  return cells;
+}
+function hexNeighbors(q,r){
+  return HEX_DIRS.map(function(d){ return {q:q+d[0], r:r+d[1]}; });
+}
+function axialToPixel(q,r,size){
+  return { x: size*(Math.sqrt(3)*q + Math.sqrt(3)/2*r), y: size*(1.5*r) };
+}
+
+/* ============ STATE ============ */
+/* SCHEMA_VERSION va incrementato ogni volta che cambia la forma di S
+   (es. passaggio da layout libero x/y a griglia q/r). Una partita
+   salvata con una versione diversa viene scartata invece di essere
+   caricata a metà, per evitare coordinate undefined/NaN che
+   farebbero risultare il tabellone "saturo" fin da subito. */
+var SCHEMA_VERSION = 3;
+var STORAGE_KEY = 'nodo_v2_state_v3';
+var S = null;
+
+function isCompatibleState(s){
+  return !!s
+    && s.schemaVersion === SCHEMA_VERSION
+    && typeof s.boardRadius === 'number' && isFinite(s.boardRadius)
+    && Array.isArray(s.nodes) && s.nodes.length>0
+    && s.nodes.every(function(n){ return typeof n.q==='number' && typeof n.r==='number' && isFinite(n.q) && isFinite(n.r); })
+    && Array.isArray(s.players) && s.players.length>0
+    && s.reinforceReserve && typeof s.reinforceReserve==='object';
+}
+
+function freshState(settings){
+  var players = settings.players;
+  var deck = buildDeck();
+  var hands = {};
+  players.forEach(function(p){
+    hands[p.id] = deck.splice(0,3);
+  });
+  var startNode = {id:0, word:settings.startWord.toUpperCase(), tokens:{}, q:0, r:0, trap:false};
+
+  var allCells = hexesInRadius(settings.boardRadius).filter(function(c){ return !(c.q===0 && c.r===0); });
+  var trapCells = shuffle(allCells).slice(0, settings.trapCount||0);
+  var traps = {};
+  trapCells.forEach(function(c){ traps[hexKey(c.q,c.r)] = true; });
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    screen:'game',
+    boardRadius: settings.boardRadius,
+    traps: traps,
+    players: players,
+    nodes:[startNode],
+    edges:[],
+    turn:0,
+    turnCount:1,
+    log:[{turn:0, text:'La rete nasce da "'+startNode.word+'".'}],
+    hands: hands,
+    drawPile: deck,
+    discardPile: [],
+    scores: players.reduce(function(o,p){o[p.id]=0;return o;},{}),
+    reinforceReserve: players.reduce(function(o,p){o[p.id]=settings.reinforceCount||0;return o;},{}),
+    completedTotal:0,
+    settings: settings,
+    pending: null,
+    nextNodeId: 1,
+    ended:false
+  };
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+  }catch(e){}
+  try{
+    if(window.claude && window.claude.hot && window.claude.hot.snapshot){
+      window.claude.hot.snapshot(S);
+    }
+  }catch(e){}
+}
+function loadFromStorage(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+/* ============ SETUP SCREEN ============ */
+var setupEl = document.getElementById('setup');
+var gameEl = document.getElementById('game');
+var endEl = document.getElementById('end');
+var playerCountRow = document.getElementById('playerCountRow');
+var playerNamesEl = document.getElementById('playerNames');
+var currentPlayerCount = 2;
+
+function renderPlayerCountRow(){
+  playerCountRow.innerHTML='';
+  [2,3,4].forEach(function(n){
+    var b=document.createElement('button');
+    b.type='button'; b.className='chip-btn'+(n===currentPlayerCount?' active':'');
+    b.textContent=n+' giocatori';
+    b.addEventListener('click', function(){ currentPlayerCount=n; renderPlayerCountRow(); renderPlayerNames(); });
+    playerCountRow.appendChild(b);
+  });
+}
+function renderPlayerNames(){
+  playerNamesEl.innerHTML='';
+  for(var i=0;i<currentPlayerCount;i++){
+    var row=document.createElement('div'); row.className='player-row';
+    var dot=document.createElement('span'); dot.className='dot'; dot.style.background=PLAYER_COLORS[i];
+    var input=document.createElement('input'); input.type='text'; input.maxLength=18;
+    input.value=PLAYER_NAMES_DEFAULT[i]; input.dataset.idx=i;
+    row.appendChild(dot); row.appendChild(input);
+    playerNamesEl.appendChild(row);
+  }
+}
+renderPlayerCountRow();
+renderPlayerNames();
+
+var boardSizeRow = document.getElementById('boardSizeRow');
+var currentBoardSize = 'medium';
+function renderBoardSizeRow(){
+  boardSizeRow.innerHTML='';
+  BOARD_SIZES.forEach(function(bs){
+    var cellCount = 3*bs.R*(bs.R+1)+1;
+    var b=document.createElement('button');
+    b.type='button'; b.className='chip-btn'+(bs.key===currentBoardSize?' active':'');
+    b.textContent=bs.label+' ('+cellCount+' caselle)';
+    b.addEventListener('click', function(){ currentBoardSize=bs.key; renderBoardSizeRow(); });
+    boardSizeRow.appendChild(b);
+  });
+}
+renderBoardSizeRow();
+
+document.getElementById('randomWordBtn').addEventListener('click', function(){
+  var w = SEED_WORDS[Math.floor(Math.random()*SEED_WORDS.length)];
+  document.getElementById('startWord').value = w;
+});
+
+document.getElementById('startGameBtn').addEventListener('click', function(){
+  var nameInputs = playerNamesEl.querySelectorAll('input');
+  var players=[];
+  nameInputs.forEach(function(inp, i){
+    var name = inp.value.trim() || PLAYER_NAMES_DEFAULT[i];
+    players.push({id:'p'+i, name:name, color:PLAYER_COLORS[i]});
+  });
+  var startWordVal = document.getElementById('startWord').value.trim() || SEED_WORDS[0];
+  var endMode = document.querySelector('input[name=endMode]:checked').value;
+  var endValue = endMode==='configs' ? parseInt(document.getElementById('endConfigsVal').value,10)||8
+                : endMode==='network' ? parseInt(document.getElementById('endNetworkVal').value,10)||40
+                : null;
+  var contest = document.getElementById('contestToggle').checked;
+  var boardR = BOARD_SIZES.filter(function(b){return b.key===currentBoardSize;})[0].R;
+  var trapCount = Math.max(0, Math.min(6, parseInt(document.getElementById('trapCount').value,10)||0));
+  var reinforceCount = Math.max(0, Math.min(12, parseInt(document.getElementById('reinforceCount').value,10)||0));
+  var settings = {players:players, startWord:startWordVal, endMode:endMode, endValue:endValue, contest:contest, boardRadius:boardR, trapCount:trapCount, reinforceCount:reinforceCount};
+  S = freshState(settings);
+  resetNetworkDom();
+  saveState();
+  showScreen('game');
+  renderAll();
+});
+
+/* ============ SCREEN SWITCH ============ */
+function showScreen(name){
+  setupEl.classList.toggle('hidden', name!=='setup');
+  gameEl.classList.toggle('hidden', name!=='game');
+  endEl.classList.toggle('hidden', name!=='end');
+}
+
+/* ============ LOG ============ */
+function addLog(text){
+  S.log.push({turn:S.turnCount, text:text});
+}
+
+/* ============ CARD DEALING ============ */
+function drawCard(playerId){
+  if(S.drawPile.length===0){
+    if(S.discardPile.length===0) return null;
+    S.drawPile = shuffle(S.discardPile);
+    S.discardPile = [];
+  }
+  return S.drawPile.pop();
+}
+
+/* ============ CONFIG CHECK & RESOLUTION ============ */
+function checkAndResolveConfigs(playerId){
+  var completedThisPass=[];
+  var iter=0;
+  while(iter<6){
+    iter++;
+    var results = evaluateHand(playerId, S);
+    var hand = S.hands[playerId];
+    var bestIdx=-1, bestPts=-1;
+    for(var i=0;i<hand.length;i++){
+      var key=hand[i];
+      if(results[key]){
+        var pts=CONFIG_TYPES[key].points;
+        if(pts>bestPts){bestPts=pts; bestIdx=i;}
+      }
+    }
+    if(bestIdx===-1) break;
+    var doneKey = hand[bestIdx];
+    S.scores[playerId] += CONFIG_TYPES[doneKey].points;
+    S.completedTotal += 1;
+    S.discardPile.push(doneKey);
+    hand.splice(bestIdx,1);
+    var newCard = drawCard(playerId);
+    if(newCard) hand.push(newCard);
+    completedThisPass.push(doneKey);
+    var pname = S.players.filter(function(p){return p.id===playerId;})[0].name;
+    addLog(pname+' completa '+CONFIG_TYPES[doneKey].label+' (+'+CONFIG_TYPES[doneKey].points+')');
+  }
+  return completedThisPass;
+}
+
+/* ============ END CONDITION ============ */
+function checkEndCondition(){
+  var mode = S.settings.endMode;
+  if(mode==='configs' && S.completedTotal>=S.settings.endValue) return true;
+  if(mode==='network' && S.nodes.length>=S.settings.endValue) return true;
+  if(mode==='deckEmpty' && S.drawPile.length===0 && S.discardPile.length===0) return true;
+  if(mode==='boardFull' && !boardHasExpandableNode()) return true;
+  /* rete di sicurezza: se il tabellone è comunque saturo ovunque, la
+     partita finisce a prescindere dalla modalità scelta — altrimenti si
+     potrebbe restare bloccati a sole mosse di Rinforza. */
+  if(!boardHasExpandableNode()) return true;
+  return false;
+}
+
+function endGame(){
+  S.ended=true;
+  S.screen='end';
+  saveState();
+  renderEnd();
+  showScreen('end');
+}
+
+/* ============ TURN ADVANCE ============ */
+function advanceTurn(){
+  S.pending=null;
+  S.turn = (S.turn+1) % S.players.length;
+  S.turnCount += 1;
+  if(checkEndCondition()){
+    saveState();
+    endGame();
+    return;
+  }
+  saveState();
+  renderAll();
+}
+
+/* ============ ACTION: ESPANDI ============ */
+document.getElementById('btnExpand').addEventListener('click', function(){
+  if(S.pending || S.ended) return;
+  S.pending = {type:'expand', step:'select-source'};
+  saveState();
+  renderAll();
+});
+document.getElementById('btnReinforce').addEventListener('click', function(){
+  if(S.pending || S.ended) return;
+  if(reinforceReserveOf(currentPlayer().id)<=0) return;
+  S.pending = {type:'reinforce', step:'select-target'};
+  saveState();
+  renderAll();
+});
+document.getElementById('endGameBtn').addEventListener('click', function(){
+  if(confirm('Terminare la partita adesso?')) endGame();
+});
+document.getElementById('newGameBtn').addEventListener('click', function(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  S=null;
+  showScreen('setup');
+});
+
+function currentPlayer(){ return S.players[S.turn]; }
+function reinforceReserveOf(playerId){
+  return S.reinforceReserve ? (S.reinforceReserve[playerId]||0) : 0;
+}
+
+/* ============ RETE GUIDA: occupazione e saturazione ============ */
+function occupiedAt(q,r){
+  return S.nodes.some(function(n){ return n.q===q && n.r===r; });
+}
+function freeNeighborsOf(node){
+  return hexNeighbors(node.q, node.r).filter(function(c){
+    return hexDistance(c.q,c.r) <= S.boardRadius && !occupiedAt(c.q,c.r);
+  });
+}
+function isSaturated(node){
+  return freeNeighborsOf(node).length===0;
+}
+function boardHasExpandableNode(){
+  return S.nodes.some(function(n){ return !isSaturated(n); });
+}
+
+function onNodeClick(nodeId){
+  if(!S || !S.pending) return;
+  var p = S.pending;
+  if(p.type==='expand' && p.step==='select-source'){
+    var node = S.nodes.filter(function(n){return n.id===nodeId;})[0];
+    if(!node || isSaturated(node)) return;
+    p.sourceId = nodeId;
+    p.step='select-cell';
+    saveState(); renderAll();
+    return;
+  }
+  if(p.type==='reinforce' && p.step==='select-target'){
+    p.targetId = nodeId;
+    p.step='confirm';
+    saveState(); renderAll();
+    return;
+  }
+}
+
+function onCellClick(key){
+  if(!S || !S.pending) return;
+  var p = S.pending;
+  if(p.type==='expand' && p.step==='select-cell'){
+    var parts = key.split(',');
+    var q = parseInt(parts[0],10), r = parseInt(parts[1],10);
+    var src = S.nodes.filter(function(n){return n.id===p.sourceId;})[0];
+    if(!src) return;
+    var valid = hexDistance(q,r)<=S.boardRadius && !occupiedAt(q,r) &&
+      hexNeighbors(src.q,src.r).some(function(n){return n.q===q && n.r===r;});
+    if(!valid) return;
+    p.targetQ = q; p.targetR = r;
+    p.step = 'enter-word';
+    saveState(); renderAll();
+    return;
+  }
+}
+
+function submitWord(){
+  var input = document.getElementById('wordInput');
+  var val = (input.value||'').trim();
+  if(!val) return;
+  S.pending.word = val.toUpperCase();
+  if(S.settings.contest){
+    S.pending.step='contest';
+  }else{
+    resolveExpandAccepted();
+    return;
+  }
+  saveState(); renderAll();
+}
+function cancelPending(){
+  S.pending=null;
+  saveState(); renderAll();
+}
+
+function resolveExpandAccepted(){
+  var p = S.pending;
+  var src = S.nodes.filter(function(n){return n.id===p.sourceId;})[0];
+  var id = S.nextNodeId++;
+  var key = hexKey(p.targetQ, p.targetR);
+  var isTrap = !!S.traps[key];
+  var newNode = { id:id, word:p.word, tokens:{}, q:p.targetQ, r:p.targetR, trap:isTrap };
+  newNode.tokens[currentPlayer().id] = 1;
+  S.nodes.push(newNode);
+  S.edges.push({a:src.id, b:id});
+  addLog(currentPlayer().name+' espande: "'+src.word+'" → "'+newNode.word+'"');
+
+  function afterReveal(){
+    var completed = checkAndResolveConfigs(currentPlayer().id);
+    if(completed.length){
+      showConfigOverlay(completed, function(){ advanceTurn(); });
+    }else{
+      advanceTurn();
+    }
+  }
+
+  if(isTrap){
+    delete S.traps[key];
+    var hand = S.hands[currentPlayer().id];
+    var lostLabel = null;
+    if(hand.length){
+      var idx = Math.floor(Math.random()*hand.length);
+      var lost = hand.splice(idx,1)[0];
+      S.discardPile.push(lost);
+      lostLabel = CONFIG_TYPES[lost].label;
+    }
+    addLog('Trappola rivelata su "'+newNode.word+'"! Non conterà mai per una Configurazione'+(lostLabel?' — '+currentPlayer().name+' scarta '+lostLabel:'')+'.');
+    showTrapOverlay(newNode.word, lostLabel, afterReveal);
+  }else{
+    afterReveal();
+  }
+}
+function resolveExpandRejected(){
+  addLog(currentPlayer().name+' propone "'+S.pending.word+'": l\'associazione viene respinta.');
+  advanceTurn();
+}
+
+function startContestFlow(contested){
+  var p = S.pending;
+  if(!contested){
+    resolveExpandAccepted();
+    return;
+  }
+  var voters = S.players.filter(function(pl){return pl.id!==currentPlayer().id;});
+  p.step='vote';
+  p.voters = voters.map(function(v){return v.id;});
+  p.votes = {};
+  saveState(); renderAll();
+}
+function castVote(pid, approve){
+  S.pending.votes[pid]=approve;
+  var allVoted = S.pending.voters.every(function(v){ return S.pending.votes.hasOwnProperty(v); });
+  if(allVoted){
+    var approvals = Object.keys(S.pending.votes).filter(function(k){return S.pending.votes[k];}).length;
+    var total = S.pending.voters.length;
+    var accepted = approvals > (total - approvals);
+    if(accepted) resolveExpandAccepted();
+    else resolveExpandRejected();
+    return;
+  }
+  saveState(); renderAll();
+}
+
+function confirmReinforce(){
+  var p = S.pending;
+  var node = S.nodes.filter(function(n){return n.id===p.targetId;})[0];
+  var pid = currentPlayer().id;
+  node.tokens[pid] = (node.tokens[pid]||0) + 1;
+  S.reinforceReserve[pid] = Math.max(0, reinforceReserveOf(pid) - 1);
+  addLog(currentPlayer().name+' rinforza "'+node.word+'" ('+S.reinforceReserve[pid]+' segnalini di Rinforzo rimasti)');
+  var completed = checkAndResolveConfigs(pid);
+  if(completed.length){
+    showConfigOverlay(completed, function(){ advanceTurn(); });
+  }else{
+    advanceTurn();
+  }
+}
+
+/* ============ CONFIG OVERLAY ============ */
+function showConfigOverlay(keys, onDone){
+  var root=document.getElementById('overlayRoot');
+  var idx=0;
+  function showNext(){
+    if(idx>=keys.length){ root.innerHTML=''; onDone(); return; }
+    var key=keys[idx];
+    var c=CONFIG_TYPES[key];
+    root.innerHTML =
+      '<div class="overlay"><div class="overlay-card">'+
+      '<div style="color:var(--text-muted);font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;">Configurazione completata</div>'+
+      '<h3>'+c.label+'</h3>'+
+      '<div class="pts">+'+c.points+'</div>'+
+      '<button class="step-btn primary" id="ovContinue">Continua</button>'+
+      '</div></div>';
+    document.getElementById('ovContinue').addEventListener('click', function(){ idx++; showNext(); });
+  }
+  showNext();
+}
+
+/* ============ TRAP OVERLAY ============ */
+function showTrapOverlay(nodeWord, lostLabel, onDone){
+  var root=document.getElementById('overlayRoot');
+  root.innerHTML =
+    '<div class="overlay"><div class="overlay-card" style="border-color:#e0563f;">'+
+    '<div style="color:#e0563f;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;">Trappola rivelata</div>'+
+    '<h3>"'+escapeXml(nodeWord)+'"</h3>'+
+    '<p style="color:var(--text-muted);margin-top:6px;">Questo Nodo non conterà mai per nessuna Configurazione.'+(lostLabel?' Hai scartato '+escapeXml(lostLabel)+'.':'')+'</p>'+
+    '<button class="step-btn primary" id="trapContinue" style="margin-top:12px;">Continua</button>'+
+    '</div></div>';
+  document.getElementById('trapContinue').addEventListener('click', function(){ root.innerHTML=''; onDone(); });
+}
+
+/* ============ HAND REVEAL ============ */
+function showHandReveal(playerId){
+  var root=document.getElementById('overlayRoot');
+  var player = S.players.filter(function(p){return p.id===playerId;})[0];
+  root.innerHTML =
+    '<div class="overlay"><div class="overlay-card">'+
+    '<div style="color:var(--text-muted);font-size:.85rem;">Passa il dispositivo a</div>'+
+    '<h3 style="color:'+player.color+'">'+player.name+'</h3>'+
+    '<button class="step-btn primary" id="revealBtn" style="margin-top:10px;">Tocca per rivelare le tue carte</button>'+
+    '</div></div>';
+  document.getElementById('revealBtn').addEventListener('click', function(){
+    var hand = S.hands[playerId];
+    var html = '<div class="overlay"><div class="overlay-card">'+
+      '<h3 style="margin-bottom:12px;">Le carte di '+player.name+'</h3>';
+    if(hand.length===0){
+      html += '<p style="color:var(--text-muted)">Nessuna carta in mano.</p>';
+    }
+    hand.forEach(function(key){
+      var c=CONFIG_TYPES[key];
+      html += '<div class="hand-card"><div class="hn">'+c.label+'</div><div class="hd">'+c.desc+'</div><div class="hp">'+c.points+' punti</div></div>';
+    });
+    html += '<button class="step-btn" id="closeHand" style="margin-top:6px;">Chiudi</button></div></div>';
+    root.innerHTML = html;
+    document.getElementById('closeHand').addEventListener('click', function(){ root.innerHTML=''; });
+  });
+}
+
+/* ============ RENDER: ACTION PANEL ============ */
+function renderActionPanel(){
+  var panel = document.getElementById('actionPanel');
+  var stageHint = document.getElementById('stageHint');
+  stageHint.classList.add('hidden');
+  var p = S.pending;
+  var boardFull = !boardHasExpandableNode();
+  var reserveLeft = reinforceReserveOf(currentPlayer().id);
+  var noReserve = reserveLeft<=0;
+  document.getElementById('btnExpand').disabled = !!p || boardFull;
+  document.getElementById('btnReinforce').disabled = !!p || noReserve;
+
+  if(!p){
+    var reserveWord = reserveLeft===1 ? '1 segnalino rimasto' : reserveLeft+' segnalini rimasti';
+    var msg;
+    if(boardFull && noReserve){
+      msg = '<p>Il tabellone è saturo e hai esaurito i segnalini di Rinforzo: nessuna azione disponibile per te in questo turno.</p>';
+    } else if(boardFull){
+      msg = '<p>Il tabellone è saturo: nessun Nodo ha più caselle libere intorno. Puoi ancora <strong style="color:var(--accent)">Rinforzare</strong> ('+reserveWord+').</p>';
+    } else if(noReserve){
+      msg = '<p>Hai esaurito i segnalini di Rinforzo: puoi ancora <strong style="color:var(--good)">Espandere</strong> la rete.</p>';
+    } else {
+      msg = '<p>Tocca <strong style="color:var(--good)">Espandi</strong> per far crescere la rete, oppure <strong style="color:var(--accent)">Rinforza</strong> ('+reserveWord+') per intervenire su un Nodo già presente.</p>';
+    }
+    panel.innerHTML = msg;
+    return;
+  }
+  if(p.type==='expand'){
+    if(p.step==='select-source'){
+      panel.innerHTML = '<p>Tocca un <span class="word-highlight">Nodo di partenza</span> non saturo nella rete qui sopra (i Nodi sbiaditi non hanno più caselle libere intorno).</p><div class="panel-actions"><button class="step-btn" id="cancelBtn">Annulla</button></div>';
+      stageHint.textContent='Scegli il Nodo da cui espandere'; stageHint.classList.remove('hidden');
+      bindCancel();
+      return;
+    }
+    if(p.step==='select-cell'){
+      var srcSel = S.nodes.filter(function(n){return n.id===p.sourceId;})[0];
+      panel.innerHTML = '<p>Tocca una <span class="word-highlight">casella libera</span> (il puntino evidenziato) adiacente a "'+srcSel.word+'".</p><div class="panel-actions"><button class="step-btn" id="cancelBtn">Annulla</button></div>';
+      stageHint.textContent='Scegli dove posizionare il nuovo Nodo'; stageHint.classList.remove('hidden');
+      bindCancel();
+      return;
+    }
+    if(p.step==='enter-word'){
+      var src = S.nodes.filter(function(n){return n.id===p.sourceId;})[0];
+      panel.innerHTML =
+        '<p>Nodo di partenza: <span class="word-highlight">'+src.word+'</span></p>'+
+        '<input type="text" id="wordInput" maxlength="22" placeholder="nuova parola collegata">'+
+        '<div class="panel-actions"><button class="step-btn primary" id="submitWordBtn">Conferma associazione</button><button class="step-btn" id="cancelBtn">Annulla</button></div>';
+      document.getElementById('submitWordBtn').addEventListener('click', submitWord);
+      document.getElementById('wordInput').addEventListener('keydown', function(e){ if(e.key==='Enter') submitWord(); });
+      bindCancel();
+      document.getElementById('wordInput').focus();
+      return;
+    }
+    if(p.step==='contest'){
+      panel.innerHTML =
+        '<p>Qualcuno contesta l\'associazione <span class="word-highlight">"'+S.nodes.filter(function(n){return n.id===p.sourceId;})[0].word+'" → "'+p.word+'"</span>?</p>'+
+        '<div class="panel-actions"><button class="step-btn good" id="noContest">No, è valida</button><button class="step-btn bad" id="yesContest">Sì, contesta</button></div>';
+      document.getElementById('noContest').addEventListener('click', function(){ startContestFlow(false); });
+      document.getElementById('yesContest').addEventListener('click', function(){ startContestFlow(true); });
+      return;
+    }
+    if(p.step==='vote'){
+      var html = '<p>Votazione sull\'associazione <span class="word-highlight">"'+p.word+'"</span>:</p>';
+      p.voters.forEach(function(vid){
+        var voter = S.players.filter(function(pl){return pl.id===vid;})[0];
+        var voted = p.votes.hasOwnProperty(vid);
+        html += '<div class="vote-row"><span>'+voter.name+'</span>';
+        if(voted){
+          html += '<span style="color:'+(p.votes[vid]?'var(--good)':'var(--bad)')+'">'+(p.votes[vid]?'Approva':'Respinge')+'</span></div>';
+        }else{
+          html += '<span><button class="step-btn good" data-vote-approve="'+vid+'">Approva</button> <button class="step-btn bad" data-vote-reject="'+vid+'">Respingi</button></span></div>';
+        }
+      });
+      panel.innerHTML = html;
+      panel.querySelectorAll('[data-vote-approve]').forEach(function(btn){
+        btn.addEventListener('click', function(){ castVote(btn.getAttribute('data-vote-approve'), true); });
+      });
+      panel.querySelectorAll('[data-vote-reject]').forEach(function(btn){
+        btn.addEventListener('click', function(){ castVote(btn.getAttribute('data-vote-reject'), false); });
+      });
+      return;
+    }
+  }
+  if(p.type==='reinforce'){
+    if(p.step==='select-target'){
+      panel.innerHTML = '<p>Tocca un <span class="word-highlight">Nodo qualsiasi</span> della rete per rinforzarlo.</p><div class="panel-actions"><button class="step-btn" id="cancelBtn">Annulla</button></div>';
+      stageHint.textContent='Scegli il Nodo da rinforzare'; stageHint.classList.remove('hidden');
+      bindCancel();
+      return;
+    }
+    if(p.step==='confirm'){
+      var tgt = S.nodes.filter(function(n){return n.id===p.targetId;})[0];
+      panel.innerHTML =
+        '<p>Aggiungere un tuo segnalino a <span class="word-highlight">"'+tgt.word+'"</span>?</p>'+
+        '<div class="panel-actions"><button class="step-btn primary" id="confirmReinforceBtn">Conferma</button><button class="step-btn" id="cancelBtn">Annulla</button></div>';
+      document.getElementById('confirmReinforceBtn').addEventListener('click', confirmReinforce);
+      bindCancel();
+      return;
+    }
+  }
+  function bindCancel(){
+    var b=document.getElementById('cancelBtn');
+    if(b) b.addEventListener('click', cancelPending);
+  }
+}
+
+/* ============ RENDER: TOPBAR / SCORE ============ */
+function renderTopbar(){
+  var wm = document.getElementById('gameWordmark');
+  wm.style.fontSize = S.turnCount>1 ? '.85rem' : '1rem';
+  var cp = currentPlayer();
+  document.getElementById('turnDot').style.background = cp.color;
+  document.getElementById('turnName').textContent = 'Turno di '+cp.name;
+  document.getElementById('turnCount').textContent = 'Turno '+S.turnCount;
+}
+function renderScoreStrip(){
+  var strip = document.getElementById('scoreStrip');
+  strip.innerHTML='';
+  S.players.forEach(function(p, i){
+    var chip=document.createElement('div');
+    chip.className='player-chip'+(i===S.turn?' current':'');
+    chip.innerHTML =
+      '<div class="pname"><span class="dot" style="background:'+p.color+'"></span>'+p.name+'</div>'+
+      '<div class="pscore">'+S.scores[p.id]+'</div>'+
+      '<div style="font-size:.7rem;color:var(--text-dim);">Rinforzi: '+reinforceReserveOf(p.id)+'</div>'+
+      '<button class="phand" data-reveal="'+p.id+'">'+S.hands[p.id].length+' carte — vedi</button>';
+    strip.appendChild(chip);
+  });
+  strip.querySelectorAll('[data-reveal]').forEach(function(btn){
+    btn.addEventListener('click', function(){ showHandReveal(btn.getAttribute('data-reveal')); });
+  });
+}
+function renderLog(){
+  var body = document.getElementById('logBody');
+  var items = S.log.slice().reverse().slice(0,60);
+  body.innerHTML = items.map(function(l){
+    return '<div class="log-entry"><span class="lt">T'+l.turn+'</span>'+l.text+'</div>';
+  }).join('');
+}
+function renderConfigRefTable(){
+  var t = document.getElementById('configRefTable');
+  if(t.dataset.built) return;
+  t.dataset.built='1';
+  var rows='';
+  Object.keys(CONFIG_TYPES).forEach(function(key){
+    var c=CONFIG_TYPES[key];
+    rows += '<tr><td>'+c.label+'</td><td>'+c.points+'</td></tr>';
+  });
+  t.innerHTML = rows;
+}
+
+function renderAll(){
+  renderTopbar();
+  renderActionPanel();
+  renderScoreStrip();
+  renderLog();
+  renderConfigRefTable();
+  renderNetwork();
+}
+
+function renderEnd(){
+  var list = document.getElementById('rankList');
+  var ranked = S.players.slice().sort(function(a,b){ return S.scores[b.id]-S.scores[a.id]; });
+  list.innerHTML = ranked.map(function(p,i){
+    return '<div class="rank-row"><span class="rk">'+(i+1)+'</span><span class="dot" style="background:'+p.color+'"></span><span class="rn">'+p.name+'</span><span class="rs">'+S.scores[p.id]+'</span></div>';
+  }).join('');
+}
+
+/* ============ RETE GUIDA: SVG RENDER (reticolo triangolare fisso) ============ */
+var svg = document.getElementById('net');
+var gridLayer = document.getElementById('gridLayer');
+var edgeLayer = document.getElementById('edgeLayer');
+var nodeLayer = document.getElementById('nodeLayer');
+var SVGNS = 'http://www.w3.org/2000/svg';
+var nodeEls = {};
+var edgeEls = {};
+var gridEls = {};
+
+/* Un solo ascoltatore delegato sull'svg: i Nodi e le caselle vengono
+   aggiornati sul posto (mai ricreati), quindi un solo binding qui basta —
+   niente re-binding continuo, che in precedenza rendeva i tocchi inaffidabili. */
+svg.addEventListener('click', function(e){
+  var nodeEl = e.target.closest ? e.target.closest('[data-node-id]') : null;
+  if(nodeEl){ onNodeClick(parseInt(nodeEl.getAttribute('data-node-id'),10)); return; }
+  var cellEl = e.target.closest ? e.target.closest('[data-cell]') : null;
+  if(cellEl){ onCellClick(cellEl.getAttribute('data-cell')); return; }
+});
+
+function ensureNodeEl(id){
+  var rec = nodeEls[id];
+  if(rec) return rec;
+  var g = document.createElementNS(SVGNS,'g');
+  g.setAttribute('class','node-circle');
+  g.setAttribute('data-node-id', id);
+  var circle = document.createElementNS(SVGNS,'circle');
+  var trapRing = document.createElementNS(SVGNS,'circle');
+  trapRing.setAttribute('class','trap-ring');
+  trapRing.setAttribute('fill','none');
+  var text = document.createElementNS(SVGNS,'text');
+  text.setAttribute('class','node-label');
+  text.setAttribute('text-anchor','middle');
+  g.appendChild(circle);
+  g.appendChild(trapRing);
+  g.appendChild(text);
+  nodeLayer.appendChild(g);
+  rec = {g:g, circle:circle, trapRing:trapRing, text:text};
+  nodeEls[id] = rec;
+  return rec;
+}
+function ensureEdgeEl(idx){
+  var line = edgeEls[idx];
+  if(line) return line;
+  line = document.createElementNS(SVGNS,'line');
+  line.setAttribute('class','edge-line');
+  edgeLayer.appendChild(line);
+  edgeEls[idx] = line;
+  return line;
+}
+function resetNetworkDom(){
+  gridLayer.innerHTML = '';
+  nodeLayer.innerHTML = '';
+  edgeLayer.innerHTML = '';
+  nodeEls = {};
+  edgeEls = {};
+  gridEls = {};
+  hexesInRadius(S.boardRadius).forEach(function(c){
+    var key = hexKey(c.q,c.r);
+    var pos = axialToPixel(c.q,c.r,HEX_SIZE);
+    var dot = document.createElementNS(SVGNS,'circle');
+    dot.setAttribute('data-cell', key);
+    dot.setAttribute('cx', pos.x); dot.setAttribute('cy', pos.y);
+    dot.setAttribute('r', 2.5);
+    dot.setAttribute('class','grid-dot');
+    gridLayer.appendChild(dot);
+    gridEls[key] = dot;
+  });
+}
+
+function degreeMap(){
+  var deg={};
+  S.edges.forEach(function(e){
+    deg[e.a]=(deg[e.a]||0)+1;
+    deg[e.b]=(deg[e.b]||0)+1;
+  });
+  return deg;
+}
+
+function colorForStatus(st){
+  if(st.status==='controllato'){
+    var pl = S.players.filter(function(p){return p.id===st.owner;})[0];
+    return pl ? pl.color : '#666';
+  }
+  return null;
+}
+
+function renderNetwork(){
+  if(!S || !S.nodes || S.nodes.length===0) return;
+  var nodes = S.nodes;
+
+  /* La vista si inquadra sull'area di gioco ATTUALE (i Nodi esistenti, più
+     le eventuali caselle candidate durante Espandi), non sull'intero
+     tabellone: altrimenti su una rete guida di 100+ caselle i primi Nodi
+     diventerebbero minuscoli e impossibili da toccare. La rete guida
+     resta comunque disegnata per intero in gridLayer — semplicemente la
+     "telecamera" segue il gioco e si allarga mano a mano che la rete cresce. */
+  var pts = nodes.map(function(n){ return axialToPixel(n.q,n.r,HEX_SIZE); });
+  if(S.pending && S.pending.type==='expand' && S.pending.step==='select-cell'){
+    var srcForView = nodes.filter(function(n){return n.id===S.pending.sourceId;})[0];
+    if(srcForView) freeNeighborsOf(srcForView).forEach(function(c){ pts.push(axialToPixel(c.q,c.r,HEX_SIZE)); });
+  }
+  var minX=Math.min.apply(null, pts.map(function(pp){return pp.x;}));
+  var maxX=Math.max.apply(null, pts.map(function(pp){return pp.x;}));
+  var minY=Math.min.apply(null, pts.map(function(pp){return pp.y;}));
+  var maxY=Math.max.apply(null, pts.map(function(pp){return pp.y;}));
+  var pad = HEX_SIZE*1.7;
+  var minSpan = HEX_SIZE*5.5;
+  var w = Math.max(maxX-minX+pad*2, minSpan);
+  var h = Math.max(maxY-minY+pad*2, minSpan);
+  var cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+  svg.setAttribute('viewBox', (cx-w/2)+' '+(cy-h/2)+' '+w+' '+h);
+
+  var deg = degreeMap();
+  var statusById = {};
+  nodes.forEach(function(n){ statusById[n.id]=nodeStatus(n); });
+
+  S.edges.forEach(function(e, idx){
+    var a=nodes.filter(function(nd){return nd.id===e.a;})[0];
+    var b=nodes.filter(function(nd){return nd.id===e.b;})[0];
+    if(!a||!b) return;
+    var pa=axialToPixel(a.q,a.r,HEX_SIZE), pb=axialToPixel(b.q,b.r,HEX_SIZE);
+    var sameOwner = statusById[a.id].status==='controllato' && statusById[b.id].status==='controllato' && statusById[a.id].owner===statusById[b.id].owner;
+    var color = sameOwner ? colorForStatus(statusById[a.id]) : 'var(--line)';
+    var op = sameOwner ? '0.9' : '0.55';
+    var line = ensureEdgeEl(idx);
+    line.setAttribute('x1', pa.x); line.setAttribute('y1', pa.y);
+    line.setAttribute('x2', pb.x); line.setAttribute('y2', pb.y);
+    line.setAttribute('stroke', color);
+    line.setAttribute('opacity', op);
+  });
+
+  var p = S.pending;
+  var selectingSource = !!(p && p.type==='expand' && p.step==='select-source');
+  var selectingCell = !!(p && p.type==='expand' && p.step==='select-cell');
+  var reinforceEligible = !!(p && p.type==='reinforce' && p.step==='select-target');
+
+  var candidateCells = {};
+  if(selectingCell){
+    var src = nodes.filter(function(n){return n.id===p.sourceId;})[0];
+    if(src) freeNeighborsOf(src).forEach(function(c){ candidateCells[hexKey(c.q,c.r)] = true; });
+  }
+  Object.keys(gridEls).forEach(function(key){
+    var isCandidate = !!candidateCells[key];
+    gridEls[key].setAttribute('class', isCandidate ? 'grid-dot candidate' : 'grid-dot');
+    gridEls[key].setAttribute('r', isCandidate ? 11 : 2.5);
+  });
+
+  nodes.forEach(function(n){
+    var st = statusById[n.id];
+    var pos = axialToPixel(n.q,n.r,HEX_SIZE);
+    var rad = 10 + Math.min(deg[n.id]||0, 6)*0.9;
+    var fill, stroke;
+    if(st.status==='controllato'){
+      fill = colorForStatus(st) || '#555';
+      stroke = 'rgba(255,255,255,.35)';
+    } else if(st.status==='conteso'){
+      fill = 'url(#hatch)';
+      stroke = 'var(--accent)';
+    } else {
+      fill = 'var(--ink-800)';
+      stroke = 'var(--line)';
+    }
+    var strokeWidth = (n.q===0 && n.r===0) ? 2.6 : 1.4;
+    var rec = ensureNodeEl(n.id);
+    rec.circle.setAttribute('cx', pos.x); rec.circle.setAttribute('cy', pos.y);
+    rec.circle.setAttribute('r', rad);
+    rec.circle.setAttribute('fill', fill);
+    rec.circle.setAttribute('stroke', stroke);
+    rec.circle.setAttribute('stroke-width', strokeWidth);
+    rec.trapRing.setAttribute('cx', pos.x); rec.trapRing.setAttribute('cy', pos.y);
+    rec.trapRing.setAttribute('r', rad+3.5);
+    rec.trapRing.style.display = n.trap ? '' : 'none';
+    rec.text.setAttribute('x', pos.x); rec.text.setAttribute('y', pos.y+rad+11);
+    if(rec.text.textContent !== n.word) rec.text.textContent = n.word;
+
+    var isEligibleSource = selectingSource && !isSaturated(n);
+    var clickableNode = isEligibleSource || reinforceEligible;
+    rec.g.style.cursor = clickableNode ? 'pointer' : 'default';
+    rec.g.style.opacity = (selectingSource && !isEligibleSource) ? '0.4' : '1';
+  });
+}
+function escapeXml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ============ BOOT ============ */
+function boot(initialData){
+  if(isCompatibleState(initialData)){
+    S = initialData;
+    showScreen(S.screen==='end' ? 'end' : 'game');
+    if(S.screen==='end') renderEnd(); else { resetNetworkDom(); renderAll(); }
+    return;
+  }
+  var stored = loadFromStorage();
+  if(isCompatibleState(stored)){
+    S = stored;
+    showScreen(S.screen==='end' ? 'end' : 'game');
+    if(S.screen==='end') renderEnd(); else { resetNetworkDom(); renderAll(); }
+    return;
+  }
+  /* Partita salvata assente, corrotta o di una versione precedente
+     (es. rete a layout libero prima dell'introduzione della griglia):
+     la scartiamo invece di caricarla a metà, così non si ritrova un
+     tabellone con coordinate undefined che risulta sempre "saturo". */
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  S = null;
+  showScreen('setup');
+}
+
+try{
+  if(window.claude && window.claude.hot){
+    if(window.claude.hot.ready){
+      window.claude.hot.ready(boot);
+    }else{
+      boot(window.claude.hot.data);
+    }
+  }else{
+    boot(null);
+  }
+}catch(e){
+  boot(null);
+}
+
+})();
+</script>
